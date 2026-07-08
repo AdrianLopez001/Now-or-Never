@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --background: #090d16;
+  --foreground: #f1f5f9;
+  --card: #111827;
+  --card-border: #1f2937;
+  --accent-primary: #6366f1;
+  --accent-secondary: #4f46e5;
+}
+
+body {
+  background-color: #090d16;
+  color: #f1f5f9;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(17, 24, 39, 0.85);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Hot-game badge pulse */
+@keyframes hotPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+.badge-hot {
+  animation: hotPulse 2s ease-in-out infinite;
+}
+
+/* Toast notification */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(20px) scale(0.95); }
+}
+.toast-in  { animation: toastIn  0.3s ease-out forwards; }
+.toast-out { animation: toastOut 0.3s ease-in  forwards; }
+
+/* Odds chip */
+.odd-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #a5b4fc;
+}
+
+/* Market row */
+.market-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.market-row:last-child { border-bottom: none; }
