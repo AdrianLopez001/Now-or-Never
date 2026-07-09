@@ -6,10 +6,6 @@ export default function Pricing() {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = () => {
     fetch("http://localhost:8080/api/users")
       .then((res) => res.json())
@@ -23,6 +19,10 @@ export default function Pricing() {
       })
       .catch((err) => console.error(err));
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const toggleSubscription = (type) => {
     if (!currentUser) return;
