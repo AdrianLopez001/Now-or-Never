@@ -10,31 +10,13 @@ export default function Header() {
   const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
-    // Fetch seeded users from Spring Boot API
-    fetch("http://localhost:8080/api/users")
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
-        // Check localStorage for active user
-        const savedUserId = localStorage.getItem("now_or_never_user_id");
-        if (savedUserId) {
-          const found = data.find((u) => u.id === savedUserId);
-          if (found) {
-            setSelectedUser(found);
-            return;
-          }
-        }
-        // Fallback to Free User (which is seeded)
-        const freeUser = data.find((u) => u.subscriptionType === "FREE") || data[0];
-        if (freeUser) {
-          setSelectedUser(freeUser);
-          localStorage.setItem("now_or_never_user_id", freeUser.id);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to load users from backend. Backend might not be running yet.", err);
-      });
+    // Produção (Vercel): sem backend de usuários — usa modo Acesso Total estático
+    const savedUserId = localStorage.getItem("now_or_never_user_id");
+    if (!savedUserId) {
+      localStorage.setItem("now_or_never_user_id", "static-user");
+    }
   }, []);
+
 
   const handleUserChange = (e) => {
     const userId = e.target.value;

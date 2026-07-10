@@ -19,15 +19,15 @@ export default function MatchDetail({ params }) {
     const savedUserId = localStorage.getItem("now_or_never_user_id");
     
     // Fetch match details
-    fetch(`http://localhost:8080/api/matches/${matchId}`)
+    fetch(`/api/matches/${matchId}`)
       .then((res) => res.json())
       .then((matchData) => {
         setMatch(matchData);
         
         // Fetch predictions
         const url = savedUserId 
-          ? `http://localhost:8080/api/predictions/match/${matchId}?userId=${savedUserId}`
-          : `http://localhost:8080/api/predictions/match/${matchId}`;
+          ? `/api/predictions/match/${matchId}?userId=${savedUserId}`
+          : `/api/predictions/match/${matchId}`;
         return fetch(url);
       })
       .then((res) => {

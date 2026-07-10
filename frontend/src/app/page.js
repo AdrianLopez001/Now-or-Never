@@ -207,7 +207,7 @@ export default function Dashboard() {
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
   const loadData = useCallback((savedUserId) => {
-    return fetch("http://localhost:8080/api/matches")
+    return fetch("/api/matches")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -216,8 +216,8 @@ export default function Dashboard() {
         setMatches(matchesData);
         const promises = matchesData.map((m) => {
           const url = savedUserId
-            ? `http://localhost:8080/api/predictions/match/${m.id}?userId=${savedUserId}`
-            : `http://localhost:8080/api/predictions/match/${m.id}`;
+            ? `/api/predictions/match/${m.id}?userId=${savedUserId}`
+            : `/api/predictions/match/${m.id}`;
           return fetch(url)
             .then((res) => (res.ok ? res.json() : null))
             .then((pred) => ({ matchId: m.id, pred }))
@@ -242,7 +242,7 @@ export default function Dashboard() {
         // O script Python pode levar minutos; a página carrega imediatamente
         // com os dados atuais e se auto-atualiza quando o backend terminar.
         setSilentSyncing(true);
-        fetch("http://localhost:8080/api/matches/refresh", { method: "POST" })
+        fetch("/api/matches/refresh", { method: "POST" })
           .then((res) => { if (res.ok) return loadData(savedUserId); })
           .catch((err) => console.warn("Silent sync error (non-blocking):", err))
           .finally(() => setSilentSyncing(false));
@@ -257,7 +257,7 @@ export default function Dashboard() {
   const handleRefresh = () => {
     setRefreshing(true);
     const savedUserId = localStorage.getItem("now_or_never_user_id");
-    fetch("http://localhost:8080/api/matches/refresh", { method: "POST" })
+    fetch("/api/matches/refresh", { method: "POST" })
       .then((res) => { if (!res.ok) throw new Error("Falha no servidor"); return res.json(); })
       .then(() => loadData(savedUserId))
       .then(() => showToast("Dados e probabilidades atualizados em tempo real! ⚡"))
@@ -393,8 +393,7 @@ export default function Dashboard() {
 
         {matches.length === 0 ? (
           <div className="rounded-xl border border-gray-900 bg-gray-950/40 p-8 text-center text-gray-500 text-sm">
-            Nenhuma partida carregada. Verifique se o backend está ativo em{" "}
-            <code className="text-violet-400">localhost:8080</code>.
+            Nenhuma partida carregada. Aguarde um momento e tente novamente.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">

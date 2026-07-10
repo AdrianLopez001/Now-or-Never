@@ -7,7 +7,7 @@ export default function Pricing() {
   const [currentUser, setCurrentUser] = useState(null);
 
   const fetchUsers = () => {
-    fetch("http://localhost:8080/api/users")
+    fetch("/api/users")
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
@@ -27,7 +27,7 @@ export default function Pricing() {
   const toggleSubscription = (type) => {
     if (!currentUser) return;
     
-    fetch(`http://localhost:8080/api/users/${currentUser.id}/subscription?type=${type}`, {
+    fetch(`/api/users/${currentUser.id}/subscription?type=${type}`, {
       method: "PUT"
     })
       .then((res) => {
