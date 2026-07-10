@@ -69,8 +69,8 @@ export default function Header() {
 
         {/* Personal Access Indicator */}
         <div className="flex items-center gap-4">
-          <span className="rounded bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1.5 text-[10px] font-bold text-white uppercase tracking-wider shadow-lg shadow-emerald-500/25 flex items-center gap-1">
-            🔓 Acesso Total (Pessoal)
+          <span className="rounded bg-gradient-to-r from-emerald-500 to-teal-600 px-2 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-wider shadow-lg shadow-emerald-500/25 flex items-center gap-1">
+            🔓 Acesso Total <span className="hidden sm:inline">(Pessoal)</span>
           </span>
         </div>
       </div>
