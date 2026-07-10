@@ -203,6 +203,7 @@ export default function Dashboard() {
   const [refreshing,   setRefreshing]   = useState(false);
   const [silentSyncing,setSilentSyncing]= useState(false);
   const [toast,        setToast]        = useState(null);
+  const [selectedLeague, setSelectedLeague] = useState("ALL");
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -380,6 +381,28 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* League Filter Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-800 pb-2">
+        {[
+          { id: "ALL", label: "Todas as Ligas" },
+          { id: "Copa do Mundo", label: "🏆 Copa do Mundo" },
+          { id: "Série A", label: "🇧🇷 Série A" },
+          { id: "Série B", label: "🇧🇷 Série B" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSelectedLeague(tab.id)}
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider border transition-all duration-300 select-none cursor-pointer ${
+              selectedLeague === tab.id
+                ? "bg-violet-600/20 border-violet-500/40 text-violet-300"
+                : "bg-gray-950/20 border-gray-900/60 text-gray-400 hover:border-gray-800 hover:text-gray-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Match grid */}
       <div>
         <h2 className="text-sm font-black text-gray-200 uppercase tracking-wider border-l-4 border-violet-500 pl-3 mb-6 flex items-center gap-3">
@@ -391,15 +414,17 @@ export default function Dashboard() {
           )}
         </h2>
 
-        {matches.length === 0 ? (
+        {matches.filter(m => selectedLeague === "ALL" || m.matchRound === selectedLeague).length === 0 ? (
           <div className="rounded-xl border border-gray-900 bg-gray-950/40 p-8 text-center text-gray-500 text-sm">
-            Nenhuma partida carregada. Aguarde um momento e tente novamente.
+            Nenhuma partida desta liga carregada para esta semana.
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
-            {matches.map((match) => (
-              <MatchCard key={match.id} match={match} pred={predictions[match.id]} />
-            ))}
+            {matches
+              .filter(m => selectedLeague === "ALL" || m.matchRound === selectedLeague)
+              .map((match) => (
+                <MatchCard key={match.id} match={match} pred={predictions[match.id]} />
+              ))}
           </div>
         )}
       </div>
