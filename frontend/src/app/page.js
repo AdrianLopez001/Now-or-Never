@@ -100,8 +100,8 @@ function MatchCard({ match, pred }) {
       {/* Teams */}
       <div className="flex items-center justify-between gap-4 px-5 py-4">
         <div className="flex flex-col items-center gap-2 flex-1">
-          <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 object-contain drop-shadow-md" />
-          <span className="text-sm font-black text-white text-center leading-tight">{match.homeTeam.name}</span>
+          <img src={match.homeTeamLogo} alt={match.homeTeamName} className="h-14 w-14 object-contain drop-shadow-md" />
+          <span className="text-sm font-black text-white text-center leading-tight">{match.homeTeamName}</span>
         </div>
 
         <div className="flex flex-col items-center gap-1 px-3">
@@ -124,8 +124,8 @@ function MatchCard({ match, pred }) {
         </div>
 
         <div className="flex flex-col items-center gap-2 flex-1">
-          <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 object-contain drop-shadow-md" />
-          <span className="text-sm font-black text-white text-center leading-tight">{match.awayTeam.name}</span>
+          <img src={match.awayTeamLogo} alt={match.awayTeamName} className="h-14 w-14 object-contain drop-shadow-md" />
+          <span className="text-sm font-black text-white text-center leading-tight">{match.awayTeamName}</span>
         </div>
       </div>
 
@@ -274,12 +274,12 @@ export default function Dashboard() {
 
     const selections = [];
     matchPreds.forEach(({ match, pred }) => {
-      if      (pred.probHomeWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.homeTeam.name}`,        prob: pred.probHomeWin,       odd: toOdd(pred.probHomeWin) });
-      else if (pred.probAwayWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.awayTeam.name}`,        prob: pred.probAwayWin,       odd: toOdd(pred.probAwayWin) });
+      if      (pred.probHomeWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.homeTeamName}`,        prob: pred.probHomeWin,       odd: toOdd(pred.probHomeWin) });
+      else if (pred.probAwayWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.awayTeamName}`,        prob: pred.probAwayWin,       odd: toOdd(pred.probAwayWin) });
       else if (pred.probDraw          > 0.60) selections.push({ match, desc: `Empate`,                                    prob: pred.probDraw,          odd: toOdd(pred.probDraw) });
       else if (pred.probDoubleChance1X > 0.60 && pred.probDoubleChance1X > pred.probDoubleChanceX2)
-                                              selections.push({ match, desc: `${match.homeTeam.name} ou Empate (1X)`,    prob: pred.probDoubleChance1X, odd: toOdd(pred.probDoubleChance1X) });
-      else if (pred.probDoubleChanceX2 > 0.60) selections.push({ match, desc: `${match.awayTeam.name} ou Empate (X2)`, prob: pred.probDoubleChanceX2, odd: toOdd(pred.probDoubleChanceX2) });
+                                              selections.push({ match, desc: `${match.homeTeamName} ou Empate (1X)`,    prob: pred.probDoubleChance1X, odd: toOdd(pred.probDoubleChance1X) });
+      else if (pred.probDoubleChanceX2 > 0.60) selections.push({ match, desc: `${match.awayTeamName} ou Empate (X2)`, prob: pred.probDoubleChanceX2, odd: toOdd(pred.probDoubleChanceX2) });
     });
     if (!selections.length) return null;
     const combinedProb = selections.reduce((acc, s) => acc * s.prob, 1.0);
@@ -342,7 +342,7 @@ export default function Dashboard() {
                     <li key={idx} className="flex items-center justify-between text-xs border-b border-gray-800/40 pb-2">
                       <div>
                         <span className="text-gray-200 font-bold block">
-                          {sel.match.homeTeam.name} vs {sel.match.awayTeam.name}
+                          {sel.match.homeTeamName} vs {sel.match.awayTeamName}
                         </span>
                         <span className="text-gray-400">{sel.desc}</span>
                       </div>

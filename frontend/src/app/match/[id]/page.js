@@ -97,9 +97,9 @@ export default function MatchDetail({ params }) {
           
           {/* Home team */}
           <div className="flex items-center gap-4 flex-1 justify-end sm:justify-start">
-            <span className="text-lg font-black text-white text-right hidden sm:inline">{match.homeTeam.name}</span>
-            <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-16 w-16 object-contain" />
-            <span className="text-lg font-black text-white sm:hidden">{match.homeTeam.name}</span>
+            <span className="text-lg font-black text-white text-right hidden sm:inline">{match.homeTeamName}</span>
+            <img src={match.homeTeamLogo} alt={match.homeTeamName} className="h-16 w-16 object-contain" />
+            <span className="text-lg font-black text-white sm:hidden">{match.homeTeamName}</span>
           </div>
           
           {/* Middle VS info */}
@@ -120,8 +120,8 @@ export default function MatchDetail({ params }) {
 
           {/* Away team */}
           <div className="flex items-center gap-4 flex-1">
-            <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-16 w-16 object-contain" />
-            <span className="text-lg font-black text-white">{match.awayTeam.name}</span>
+            <img src={match.awayTeamLogo} alt={match.awayTeamName} className="h-16 w-16 object-contain" />
+            <span className="text-lg font-black text-white">{match.awayTeamName}</span>
           </div>
 
         </div>
@@ -593,7 +593,7 @@ export default function MatchDetail({ params }) {
               </div>
               <div className="space-y-2.5 text-xs text-gray-300">
                 <div className="flex justify-between">
-                  <span>Vitória {match.homeTeam.name}:</span>
+                  <span>Vitória {match.homeTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.rf.home * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
@@ -601,7 +601,7 @@ export default function MatchDetail({ params }) {
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.rf.draw * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Vitória {match.awayTeam.name}:</span>
+                  <span>Vitória {match.awayTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.rf.away * 100)}%</span>
                 </div>
                 <div className="border-t border-gray-800/60 pt-2.5 space-y-1.5">
@@ -625,7 +625,7 @@ export default function MatchDetail({ params }) {
               </div>
               <div className="space-y-2.5 text-xs text-gray-300">
                 <div className="flex justify-between">
-                  <span>Vitória {match.homeTeam.name}:</span>
+                  <span>Vitória {match.homeTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.lr.home * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
@@ -633,7 +633,7 @@ export default function MatchDetail({ params }) {
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.lr.draw * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Vitória {match.awayTeam.name}:</span>
+                  <span>Vitória {match.awayTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.lr.away * 100)}%</span>
                 </div>
                 <div className="border-t border-gray-800/60 pt-2.5 space-y-1.5">
@@ -657,7 +657,7 @@ export default function MatchDetail({ params }) {
               </div>
               <div className="space-y-2.5 text-xs text-gray-300">
                 <div className="flex justify-between">
-                  <span>Vitória {match.homeTeam.name}:</span>
+                  <span>Vitória {match.homeTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.gb.home * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
@@ -665,7 +665,7 @@ export default function MatchDetail({ params }) {
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.gb.draw * 100)}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Vitória {match.awayTeam.name}:</span>
+                  <span>Vitória {match.awayTeamName}:</span>
                   <span className="font-semibold text-gray-100">{Math.round(explanations.consensus.models.gb.away * 100)}%</span>
                 </div>
                 <div className="border-t border-gray-800/60 pt-2.5 space-y-1.5">
