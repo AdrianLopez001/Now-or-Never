@@ -11,17 +11,29 @@ export async function GET(request, { params }) {
   const { matchId } = resolvedParams;
 
   try {
-    const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard", {
-      next: { revalidate: 15 },
+    const leagues = ["fifa.world", "bra.1", "bra.2"];
+    const fetchPromises = leagues.map(async (code) => {
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/scoreboard`, {
+          next: { revalidate: 15 },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const found = (data.events || []).find((e) => numToUUID(parseInt(e.id)) === matchId);
+        if (found) {
+          return { event: found, leagueCode: code };
+        }
+        return null;
+      } catch (err) {
+        return null;
+      }
     });
 
-    if (!res.ok) throw new Error(`ESPN API returned status ${res.status}`);
-    const data = await res.json();
-    const events = data.events || [];
+    const results = await Promise.all(fetchPromises);
+    const matchObj = results.find(Boolean);
 
-    const liveMatch = events.find((e) => numToUUID(parseInt(e.id)) === matchId);
-
-    if (liveMatch) {
+    if (matchObj) {
+      const { event: liveMatch, leagueCode } = matchObj;
       const comp = liveMatch.competitions?.[0] || {};
       const competitors = comp.competitors || [];
       const homeComp = competitors.find((c) => c.homeAway === "home") || {};
@@ -36,6 +48,8 @@ export async function GET(request, { params }) {
       const homeScore = homeComp.score !== undefined ? parseInt(homeComp.score) : null;
       const awayScore = awayComp.score !== undefined ? parseInt(awayComp.score) : null;
 
+      const leagueLabel = leagueCode === "fifa.world" ? "Copa do Mundo" : leagueCode === "bra.1" ? "Série A" : "Série B";
+
       return NextResponse.json({
         id: matchId,
         homeTeamName: homeTeam.displayName || "Home Team",
@@ -44,7 +58,7 @@ export async function GET(request, { params }) {
         awayTeamLogo: awayTeam.logo || "https://a.espncdn.com/i/teamlogos/countries/500/generic.png",
         matchStatus: status,
         matchDate: liveMatch.date || new Date().toISOString(),
-        matchRound: comp.season?.slug || "Copa do Mundo",
+        matchRound: leagueLabel,
         homeScore: status !== "SCHEDULED" ? homeScore : null,
         awayScore: status !== "SCHEDULED" ? awayScore : null,
         apiFootballId: parseInt(liveMatch.id),

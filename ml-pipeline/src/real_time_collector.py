@@ -287,6 +287,8 @@ def main():
                         help="Código da competição football-data.org (padrão: BSA)")
     parser.add_argument("--fallback-espn", action="store_true",
                         help="Usa ESPN como fonte (ignora football-data.org)")
+    parser.add_argument("--espn-competition", default="fifa.world",
+                        help="ESPN league slug (e.g. bra.1, bra.2, fifa.world)")
     parser.add_argument("--days-ahead", type=int, default=MAX_DAYS_AHEAD,
                         help=f"Janela de dias para predições (padrão: {MAX_DAYS_AHEAD})")
     args = parser.parse_args()
@@ -302,9 +304,9 @@ def main():
         matches = fetch_football_data_matches(competition=competition)
 
     if not matches:
-        # Fallback para ESPN (Copa do Mundo apenas)
-        print("Nenhuma partida encontrada no football-data.org. Tentando ESPN...")
-        matches = fetch_espn_matches()
+        # Fallback para ESPN
+        print(f"Buscando partidas via ESPN [{args.espn_competition}]...")
+        matches = fetch_espn_matches(args.espn_competition)
 
     # Filtrar apenas partidas ativas (SCHEDULED ou LIVE) dentro da janela de datas
     def in_window(m: dict) -> bool:
@@ -326,9 +328,7 @@ def main():
     target_path = "../backend/src/main/resources/predictions.json"
 
     if not active_matches:
-        with open(target_path, "w") as f:
-            json.dump([], f, indent=2)
-        print(f"Nenhuma partida nos próximos {args.days_ahead} dias. predictions.json limpo.")
+        print(f"Nenhuma partida nos próximos {args.days_ahead} dias para esta competição. Mantendo predições existentes.")
         return
 
     # ── 2. Buscar classificação para features reais ───────────────────────────
@@ -419,10 +419,24 @@ def main():
         }
         predictions.append(payload)
 
-    with open(target_path, "w") as f:
-        json.dump(predictions, f, indent=2, ensure_ascii=False)
+    # Mescla as predições novas com as existentes para evitar sobrescrever outras ligas
+    existing = []
+    import os
+    if os.path.exists(target_path):
+        try:
+            with open(target_path, "r") as f:
+                existing = json.load(f)
+        except Exception as ex:
+            print(f"Aviso ao ler predições existentes: {ex}")
 
-    print(f"\n✅ {len(predictions)} predições escritas em: {target_path}")
+    # Sobrescreve as que têm o mesmo ID de partida, mantém as outras
+    new_ids = {p["matchApiFootballId"] for p in predictions}
+    merged = [p for p in existing if p["matchApiFootballId"] not in new_ids] + predictions
+
+    with open(target_path, "w") as f:
+        json.dump(merged, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✅ {len(predictions)} predições mescladas no total de {len(merged)} escritas em: {target_path}")
 
 
 if __name__ == "__main__":

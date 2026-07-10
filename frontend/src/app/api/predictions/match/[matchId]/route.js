@@ -139,29 +139,37 @@ export async function GET(request, { params }) {
   let awayScore = pred.awayScore;
   let status = pred.matchStatus;
 
-  // 2. Tenta obter o status atualizado do placar em tempo real da ESPN Scoreboard API
+  // 2. Tenta obter o status atualizado do placar em tempo real de qualquer uma das ligas
   try {
-    const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard", {
-      next: { revalidate: 15 },
+    const leagues = ["fifa.world", "bra.1", "bra.2"];
+    const fetchPromises = leagues.map(async (code) => {
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/scoreboard`, {
+          next: { revalidate: 15 },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const found = (data.events || []).find((e) => numToUUID(parseInt(e.id)) === matchId);
+        return found || null;
+      } catch (err) {
+        return null;
+      }
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      const events = data.events || [];
-      const liveMatch = events.find((e) => numToUUID(parseInt(e.id)) === matchId);
+    const results = await Promise.all(fetchPromises);
+    const liveMatch = results.find(Boolean);
 
-      if (liveMatch) {
-        const comp = liveMatch.competitions?.[0] || {};
-        const competitors = comp.competitors || [];
-        const homeComp = competitors.find((c) => c.homeAway === "home") || {};
-        const awayComp = competitors.find((c) => c.homeAway === "away") || {};
+    if (liveMatch) {
+      const comp = liveMatch.competitions?.[0] || {};
+      const competitors = comp.competitors || [];
+      const homeComp = competitors.find((c) => c.homeAway === "home") || {};
+      const awayComp = competitors.find((c) => c.homeAway === "away") || {};
 
-        const rawStatus = comp.status?.type?.state || "pre";
-        status = rawStatus === "pre" ? "SCHEDULED" : rawStatus === "in" ? "LIVE" : "FINISHED";
+      const rawStatus = comp.status?.type?.state || "pre";
+      status = rawStatus === "pre" ? "SCHEDULED" : rawStatus === "in" ? "LIVE" : "FINISHED";
 
-        homeScore = homeComp.score !== undefined ? parseInt(homeComp.score) : null;
-        awayScore = awayComp.score !== undefined ? parseInt(awayComp.score) : null;
-      }
+      homeScore = homeComp.score !== undefined ? parseInt(homeComp.score) : null;
+      awayScore = awayComp.score !== undefined ? parseInt(awayComp.score) : null;
     }
   } catch (error) {
     console.error("ESPN Live Fetch in predictions API failed:", error);
@@ -184,7 +192,7 @@ export async function GET(request, { params }) {
     probUnder25: adjusted.under25,
     probOver05: adjusted.over05,
     probUnder35: adjusted.under35,
-    probDoubleChance1X: adjusted.home + adjusted.draw, // Atualiza dinamicamente a chance dupla
+    probDoubleChance1X: adjusted.home + adjusted.draw,
     probDoubleChance12: adjusted.home + adjusted.away,
     probDoubleChanceX2: adjusted.draw + adjusted.away,
     probOver95Corners: adjusted.corners,

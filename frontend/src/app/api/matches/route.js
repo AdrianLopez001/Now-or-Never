@@ -22,17 +22,32 @@ export async function GET() {
 
     const datesStr = `${formatDate(today)}-${formatDate(nextWeek)}`;
     
-    // 2. Busca na ESPN Scoreboard API com o intervalo de datas
-    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${datesStr}`, {
-      next: { revalidate: 15 }, // Cache de 15 segundos
+    // 2. Ligas que queremos exibir: Copa do Mundo (fifa.world), Série A (bra.1) e Série B (bra.2)
+    const leagues = [
+      { code: "fifa.world", label: "Copa do Mundo" },
+      { code: "bra.1", label: "Série A" },
+      { code: "bra.2", label: "Série B" },
+    ];
+
+    const fetchPromises = leagues.map(async (league) => {
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league.code}/scoreboard?dates=${datesStr}`, {
+          next: { revalidate: 15 },
+        });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.events || []).map((e) => ({ event: e, leagueLabel: league.label }));
+      } catch (err) {
+        console.error(`Failed to fetch league ${league.code}:`, err);
+        return [];
+      }
     });
 
-    if (!res.ok) throw new Error(`ESPN API returned status ${res.status}`);
-    const data = await res.json();
-    const events = data.events || [];
+    const results = await Promise.all(fetchPromises);
+    const allEvents = results.flat();
 
-    const matches = events
-      .map((e) => {
+    const matches = allEvents
+      .map(({ event: e, leagueLabel }) => {
         const comp = e.competitions?.[0] || {};
         const competitors = comp.competitors || [];
         const homeComp = competitors.find((c) => c.homeAway === "home") || {};
@@ -58,6 +73,10 @@ export async function GET() {
         const matchId = parseInt(e.id);
         const uuid = numToUUID(matchId);
 
+        // Só exibe jogos que de fato temos no predictions.json para não quebrar a página com erros
+        const hasPrediction = predictions.some(p => p.matchApiFootballId === matchId);
+        if (!hasPrediction) return null;
+
         return {
           id: uuid,
           homeTeamName: homeName || "Home Team",
@@ -66,13 +85,13 @@ export async function GET() {
           awayTeamLogo: awayTeam.logo || "https://a.espncdn.com/i/teamlogos/countries/500/generic.png",
           matchStatus: status,
           matchDate: e.date || new Date().toISOString(),
-          matchRound: comp.season?.slug || "Copa do Mundo",
+          matchRound: leagueLabel,
           homeScore: status !== "SCHEDULED" ? homeScore : null,
           awayScore: status !== "SCHEDULED" ? awayScore : null,
           apiFootballId: matchId,
         };
       })
-      .filter(Boolean); // Remove matches que foram filtradas (placeholders)
+      .filter(Boolean);
 
     return NextResponse.json(matches, {
       headers: { "Access-Control-Allow-Origin": "*" },
