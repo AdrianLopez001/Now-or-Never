@@ -7,8 +7,54 @@ function numToUUID(n) {
 }
 
 export async function GET(request, { params }) {
-  const { matchId } = params;
+  const resolvedParams = await params;
+  const { matchId } = resolvedParams;
 
+  try {
+    const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard", {
+      next: { revalidate: 15 },
+    });
+
+    if (!res.ok) throw new Error(`ESPN API returned status ${res.status}`);
+    const data = await res.json();
+    const events = data.events || [];
+
+    const liveMatch = events.find((e) => numToUUID(parseInt(e.id)) === matchId);
+
+    if (liveMatch) {
+      const comp = liveMatch.competitions?.[0] || {};
+      const competitors = comp.competitors || [];
+      const homeComp = competitors.find((c) => c.homeAway === "home") || {};
+      const awayComp = competitors.find((c) => c.homeAway === "away") || {};
+
+      const homeTeam = homeComp.team || {};
+      const awayTeam = awayComp.team || {};
+
+      const rawStatus = comp.status?.type?.state || "pre";
+      const status = rawStatus === "pre" ? "SCHEDULED" : rawStatus === "in" ? "LIVE" : "FINISHED";
+
+      const homeScore = homeComp.score !== undefined ? parseInt(homeComp.score) : null;
+      const awayScore = awayComp.score !== undefined ? parseInt(awayComp.score) : null;
+
+      return NextResponse.json({
+        id: matchId,
+        homeTeamName: homeTeam.displayName || "Home Team",
+        homeTeamLogo: homeTeam.logo || "https://a.espncdn.com/i/teamlogos/countries/500/generic.png",
+        awayTeamName: awayTeam.displayName || "Away Team",
+        awayTeamLogo: awayTeam.logo || "https://a.espncdn.com/i/teamlogos/countries/500/generic.png",
+        matchStatus: status,
+        matchDate: liveMatch.date || new Date().toISOString(),
+        matchRound: comp.season?.slug || "Copa do Mundo",
+        homeScore: status !== "SCHEDULED" ? homeScore : null,
+        awayScore: status !== "SCHEDULED" ? awayScore : null,
+        apiFootballId: parseInt(liveMatch.id),
+      });
+    }
+  } catch (error) {
+    console.error("ESPN Live Single Match Fetch failed, falling back:", error);
+  }
+
+  // Fallback
   const pred = predictions.find(
     (p, i) => numToUUID(p.matchApiFootballId || i + 1) === matchId
   );

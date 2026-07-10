@@ -63,13 +63,23 @@ public class MatchController {
         log.info("Iniciando refresh de partidas — competição: {}", comp);
 
         try {
-            String pythonPath = "/Users/Adrian/Desktop/estudos/black king/ml-pipeline/venv/bin/python3";
-            String scriptPath = "/Users/Adrian/Desktop/estudos/black king/ml-pipeline/src/real_time_collector.py";
+            String projectRoot = System.getenv().getOrDefault("PROJECT_ROOT", System.getProperty("user.dir"));
+            java.io.File rootDir = new java.io.File(projectRoot);
+            if (rootDir.getName().equals("backend")) {
+                rootDir = rootDir.getParentFile();
+            }
+
+            String pythonPath = System.getenv().getOrDefault("PYTHON_PATH", 
+                new java.io.File(rootDir, "ml-pipeline/venv/bin/python3").exists() ?
+                new java.io.File(rootDir, "ml-pipeline/venv/bin/python3").getAbsolutePath() : "python3");
+
+            String scriptPath = new java.io.File(rootDir, "ml-pipeline/src/real_time_collector.py").getAbsolutePath();
+            java.io.File pipelineDir = new java.io.File(rootDir, "ml-pipeline");
 
             ProcessBuilder pb = new ProcessBuilder(
                     pythonPath, scriptPath, "--competition", comp
             );
-            pb.directory(new java.io.File("/Users/Adrian/Desktop/estudos/black king/ml-pipeline"));
+            pb.directory(pipelineDir);
             pb.redirectErrorStream(true);
 
             Process process = pb.start();

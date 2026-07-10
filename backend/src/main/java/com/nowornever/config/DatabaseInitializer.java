@@ -71,7 +71,12 @@ public class DatabaseInitializer implements CommandLineRunner {
         log.info("Loading pre-calculated predictions from json...");
         try {
             ObjectMapper mapper = new ObjectMapper();
-            File file = new File("/Users/Adrian/Desktop/estudos/black king/backend/src/main/resources/predictions.json");
+            String projectRoot = System.getenv().getOrDefault("PROJECT_ROOT", System.getProperty("user.dir"));
+            File rootDir = new File(projectRoot);
+            if (rootDir.getName().equals("backend")) {
+                rootDir = rootDir.getParentFile();
+            }
+            File file = new File(rootDir, "backend/src/main/resources/predictions.json");
             InputStream is = getClass().getResourceAsStream("/predictions.json");
 
             List<PredictionMessageDto> predictions = null;
