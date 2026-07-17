@@ -8,10 +8,10 @@ function numToUUID(n) {
 
 export async function GET() {
   try {
-    // 1. Calcula dinamicamente o intervalo de datas (hoje até daqui a 7 dias)
+    // 1. Calcula dinamicamente o intervalo de datas (hoje até daqui a 14 dias)
     const today = new Date();
     const nextWeek = new Date();
-    nextWeek.setDate(today.getDate() + 7);
+    nextWeek.setDate(today.getDate() + 14);
 
     const formatDate = (date) => {
       const y = date.getFullYear();
@@ -58,6 +58,7 @@ export async function GET() {
 
         const rawStatus = comp.status?.type?.state || "pre";
         const status = rawStatus === "pre" ? "SCHEDULED" : rawStatus === "in" ? "LIVE" : "FINISHED";
+        if (status === "FINISHED") return null;
 
         const homeScore = homeComp.score !== undefined ? parseInt(homeComp.score) : null;
         const awayScore = awayComp.score !== undefined ? parseInt(awayComp.score) : null;
@@ -100,19 +101,21 @@ export async function GET() {
     console.error("ESPN Live Fetch failed, falling back to static predictions.json:", error);
 
     // Fallback: serve os dados originais mapeados estaticamente de predictions.json
-    const matches = predictions.map((p, i) => ({
-      id: numToUUID(p.matchApiFootballId || i + 1),
-      homeTeamName: p.homeTeamName,
-      homeTeamLogo: p.homeTeamLogo,
-      awayTeamName: p.awayTeamName,
-      awayTeamLogo: p.awayTeamLogo,
-      matchStatus: p.matchStatus,
-      matchDate: p.matchDate,
-      matchRound: p.matchRound,
-      homeScore: p.homeScore,
-      awayScore: p.awayScore,
-      apiFootballId: p.matchApiFootballId,
-    }));
+    const matches = predictions
+      .map((p, i) => ({
+        id: numToUUID(p.matchApiFootballId || i + 1),
+        homeTeamName: p.homeTeamName,
+        homeTeamLogo: p.homeTeamLogo,
+        awayTeamName: p.awayTeamName,
+        awayTeamLogo: p.awayTeamLogo,
+        matchStatus: p.matchStatus,
+        matchDate: p.matchDate,
+        matchRound: p.matchRound,
+        homeScore: p.homeScore,
+        awayScore: p.awayScore,
+        apiFootballId: p.matchApiFootballId,
+      }))
+      .filter(m => m.matchStatus !== "FINISHED");
 
     return NextResponse.json(matches, {
       headers: { "Access-Control-Allow-Origin": "*" },
