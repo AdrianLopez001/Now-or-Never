@@ -86,6 +86,16 @@ export default function Header() {
             >
               Calibração (Proof of Work)
             </Link>
+            <Link
+              href="/bankroll"
+              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === "/bankroll" 
+                  ? "bg-gray-800 text-white" 
+                  : "text-gray-400 hover:bg-gray-900 hover:text-gray-200"
+              }`}
+            >
+              📊 Gestão de Banca (ProbEngine)
+            </Link>
           </nav>
         </div>
 
@@ -122,6 +132,14 @@ export default function Header() {
           }`}
         >
           Calibração
+        </Link>
+        <Link
+          href="/bankroll"
+          className={`flex-1 text-center py-1 text-xs font-semibold rounded-md ${
+            pathname === "/bankroll" ? "bg-gray-800 text-white" : "text-gray-400"
+          }`}
+        >
+          📊 Banca
         </Link>
       </div>
     </header>
