@@ -29,6 +29,10 @@ export default function BankrollPage() {
   const [targetProfitInput, setTargetProfitInput] = useState("50");
   const [targetProfit, setTargetProfit] = useState(50);
 
+  // --- State for Quick Goal Simulator ---
+  const [quickStake, setQuickStake] = useState("100");
+  const [quickProfit, setQuickProfit] = useState("50");
+
   // --- State for Matches and Bets ---
   const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState({});
@@ -694,6 +698,13 @@ export default function BankrollPage() {
     }
   }, [message]);
 
+  // --- Quick Simulator Calculations ---
+  const qStake = parseFloat(quickStake) || 0;
+  const qProfit = parseFloat(quickProfit) || 0;
+  const quickTotalReturn = qStake + qProfit;
+  const quickOdd = qStake > 0 ? (1 + qProfit / qStake) : 1.0;
+  const quickProb = quickOdd > 0 ? (1 / quickOdd) : 0.0;
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Toast message */}
@@ -1313,6 +1324,80 @@ export default function BankrollPage() {
 
               </form>
             )}
+          </div>
+
+          {/* Quick Entry Simulator Card */}
+          <div className="glass-panel rounded-3xl border border-gray-800 p-6 shadow-xl relative overflow-hidden space-y-4">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-500" />
+            
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span>⚡</span> Simulador Rápido de Entrada
+              </h3>
+              <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
+                Calcule instantaneamente a odd e a probabilidade de equilíbrio para uma aposta e retorno específicos.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Quanto Quero Apostar (Stake)</label>
+                <input
+                  type="number"
+                  value={quickStake}
+                  onChange={(e) => setQuickStake(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-cyan-500"
+                  placeholder="Ex: 100"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Lucro Desejado (BRL)</label>
+                <input
+                  type="number"
+                  value={quickProfit}
+                  onChange={(e) => setQuickProfit(e.target.value)}
+                  className="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-cyan-500"
+                  placeholder="Ex: 50"
+                />
+              </div>
+            </div>
+
+            {/* Calculations display */}
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <div className="bg-gray-950/60 border border-gray-900 rounded-xl p-3 text-center">
+                <span className="text-[8px] text-gray-500 block uppercase font-bold tracking-wider mb-1">Retorno Total</span>
+                <span className="text-xs font-black text-white block">{toBRL(quickTotalReturn)}</span>
+              </div>
+              <div className="bg-gray-950/60 border border-gray-900 rounded-xl p-3 text-center border-l-2 border-l-cyan-500/40">
+                <span className="text-[8px] text-gray-500 block uppercase font-bold tracking-wider mb-1">Odd Necessária</span>
+                <span className="text-xs font-black text-white block">{quickOdd.toFixed(2)}</span>
+              </div>
+              <div className="bg-gray-950/60 border border-gray-900 rounded-xl p-3 text-center">
+                <span className="text-[8px] text-gray-500 block uppercase font-bold tracking-wider mb-1">Confiança Mínima</span>
+                <span className="text-xs font-black text-white block">{(quickProb * 100).toFixed(1)}%</span>
+              </div>
+            </div>
+
+            {/* Warnings and strategy limits */}
+            <div className="pt-1">
+              {qStake > balance * 0.05 ? (
+                <div className="bg-rose-950/20 border border-rose-500/30 rounded-xl p-3 text-[9px] text-rose-300 font-semibold flex gap-2">
+                  <span>🚨</span>
+                  <span>Exposição crítica da banca! Esta aposta representa <strong>{((qStake / balance) * 100).toFixed(1)}%</strong> da sua banca total. Para uma gestão profissional, evite arriscar mais de 5% em uma única entrada.</span>
+                </div>
+              ) : qStake > balance * 0.02 ? (
+                <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-3 text-[9px] text-amber-300 font-semibold flex gap-2">
+                  <span>⚠️</span>
+                  <span>Stake moderada (<strong>{((qStake / balance) * 100).toFixed(1)}%</strong> da banca). Certifique-se de que a aposta possui Valor Esperado (EV) positivo antes de operar.</span>
+                </div>
+              ) : (
+                <div className="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-3 text-[9px] text-cyan-300 font-semibold flex gap-2">
+                  <span>🛡️</span>
+                  <span>Stake segura de <strong>{((qStake / balance) * 100).toFixed(1)}%</strong> da banca. Excelente controle de exposição.</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
