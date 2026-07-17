@@ -8,6 +8,7 @@ import {
   runMonteCarlo,
   generateStrategies
 } from "../../utils/mathEngine";
+import GoalCalculator from "../../components/GoalCalculator";
 
 // Helper formats
 const toBRL = (val) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -16,6 +17,7 @@ const pct = (val) => `${(val * 100).toFixed(1)}%`;
 export default function BankrollPage() {
   // --- State for Settings ---
   const [balance, setBalance] = useState(1000);
+  const [activeTab, setActiveTab] = useState("dashboard"); // 'dashboard' | 'goal_calculator'
   const [tempBalanceInput, setTempBalanceInput] = useState("1000");
   const [isEditingBalance, setIsEditingBalance] = useState(false);
   const [kellyFraction, setKellyFraction] = useState(0.25); // Default: 1/4 Kelly
@@ -780,7 +782,33 @@ export default function BankrollPage() {
         </div>
       </div>
 
-      {/* Financial stats summary panels */}
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-gray-850 gap-6 mb-6">
+        <button
+          onClick={() => setActiveTab("dashboard")}
+          className={`pb-3 text-xs font-black uppercase tracking-wider transition-all duration-300 border-b-2 select-none cursor-pointer ${
+            activeTab === "dashboard"
+              ? "border-violet-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-400"
+          }`}
+        >
+          📊 Painel de Banca & Kelly
+        </button>
+        <button
+          onClick={() => setActiveTab("goal_calculator")}
+          className={`pb-3 text-xs font-black uppercase tracking-wider transition-all duration-300 border-b-2 select-none cursor-pointer ${
+            activeTab === "goal_calculator"
+              ? "border-violet-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-400"
+          }`}
+        >
+          🎯 Calculadora de Metas
+        </button>
+      </div>
+
+      {activeTab === "dashboard" ? (
+        <>
+          {/* Financial stats summary panels */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         {/* Current bankroll balance */}
         <div className="glass-panel rounded-2xl p-5 border border-gray-800 flex flex-col justify-between col-span-2 lg:col-span-2">
@@ -1462,6 +1490,10 @@ export default function BankrollPage() {
           </div>
         )}
       </div>
+        </>
+      ) : (
+        <GoalCalculator currentBalance={balance} />
+      )}
 
     </div>
   );

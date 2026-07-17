@@ -465,3 +465,95 @@ export function generateStrategies(matches, predictions, targetProfit = 50) {
 
   return [safeOption, moderateOption, riskyOption];
 }
+
+export function calculateGoalMetrics({
+  capital,
+  targetProfit,
+  days,
+  riskProfile = "conservative",
+  betsPerDay = 1,
+  calcMode = "fixed"
+}) {
+  const cap = parseFloat(capital) || 0;
+  const target = parseFloat(targetProfit) || 0;
+  const d = parseInt(days) || 0;
+  const bpd = parseInt(betsPerDay) || 1;
+
+  if (cap <= 0 || target <= 0 || d <= 0 || bpd <= 0) {
+    return { error: "Todos os valores devem ser maiores que zero e o prazo em dias maior ou igual a 1." };
+  }
+
+  // Get risk profile percentage
+  let riskPct = 0.01; // default conservative
+  if (riskProfile === "moderate") {
+    riskPct = 0.02;
+  } else if (riskProfile === "aggressive") {
+    riskPct = 0.05; // 5% limit
+  }
+
+  const stake = Math.round(cap * riskPct * 100) / 100;
+  const totalBets = d * bpd;
+
+  let odd = 1.0;
+  let prob = 0.0;
+  let profitPerBet = 0.0;
+
+  if (calcMode === "fixed") {
+    profitPerBet = target / totalBets;
+    odd = 1 + (profitPerBet / stake);
+    prob = 1 / odd;
+  } else {
+    // Compound interest mode: F = P * (1 + riskPct * (odd - 1))^N
+    // factor = (F / P)^(1 / N)
+    // factor = 1 + riskPct * (odd - 1)
+    // odd = 1 + (factor - 1) / riskPct
+    const finalTarget = cap + target;
+    const growthFactor = Math.pow(finalTarget / cap, 1 / totalBets);
+    const growthRate = growthFactor - 1;
+    odd = 1 + (growthRate / riskPct);
+    prob = 1 / odd;
+    profitPerBet = stake * (odd - 1);
+  }
+
+  // Round results
+  const roundedOdd = Math.round(odd * 100) / 100;
+  const roundedProb = Math.round(prob * 1000) / 1000;
+  const roundedProfitPerBet = Math.round(profitPerBet * 100) / 100;
+
+  // Run feasibility check (guardrails)
+  const alerts = [];
+  if (roundedOdd < 1.10) {
+    alerts.push({
+      type: "warning",
+      message: "A odd necessária é muito baixa (< 1.10). Sugerimos aumentar a meta de lucro ou diminuir o prazo/número de apostas para fazer as operações valerem a pena."
+    });
+  }
+  if (roundedOdd > 2.50) {
+    alerts.push({
+      type: "danger",
+      message: "A odd necessária é muito alta (> 2.50) para ser batida de forma consistente com stake seguro. Sugerimos estender o prazo, reduzir a meta de lucro ou aumentar as apostas diárias."
+    });
+  }
+  if (riskProfile === "aggressive") {
+    alerts.push({
+      type: "info",
+      message: "Atenção: O perfil Agressivo (5% de stake) aumenta severamente o risco de ruína da banca em sequências de perdas. Monitore seus drawdowns de perto."
+    });
+  }
+  if (target > cap) {
+    alerts.push({
+      type: "danger",
+      message: "Meta de Lucro crítica! Projetar um lucro maior do que o capital inicial (dobrar a banca ou mais) exige taxas de acerto fora de qualquer padrão seguro de gestão."
+    });
+  }
+
+  return {
+    stake,
+    riskPct,
+    totalBets,
+    odd: roundedOdd,
+    probEquilibrium: roundedProb,
+    profitPerBet: roundedProfitPerBet,
+    alerts
+  };
+}
