@@ -121,7 +121,7 @@ class ShapExplainer:
             print(f"Independent DDG web search failed: {e}")
         return None
 
-    def _generate_claude_explanations(self, home_team, away_team, feature_dict, prob_outcome, prob_btts, prob_over25, web_news=None):
+    def _generate_claude_explanations(self, home_team, away_team, feature_dict, prob_outcome, prob_btts, prob_over25, web_news=None, competition="Copa do Mundo"):
         """
         Calls Anthropic Claude API to generate professional sports analysis in Portuguese.
         """
@@ -137,7 +137,7 @@ class ShapExplainer:
         
         prompt = f"""
 Você é um analista de apostas esportivas e especialista em futebol.
-Estamos analisando a partida da Copa do Mundo 2026: {home_team} vs {away_team}.
+Estamos analisando a partida da {competition}: {home_team} vs {away_team}.
 
 Dados Preditivos da nossa IA:
 - Vitória do {home_team}: {prob_outcome[0]*100:.1f}%
@@ -187,7 +187,7 @@ Por favor, gere uma análise profissional em português estruturada EXATAMENTE c
             print(f"Claude API request failed: {e}")
         return None
 
-    def explain_match(self, feature_dict, home_team="Mandante", away_team="Visitante"):
+    def explain_match(self, feature_dict, home_team="Mandante", away_team="Visitante", competition="Copa do Mundo"):
         """
         Calculates SHAP values and cross-references probabilities across three models (RF, LR, GB).
         Returns averaged consensus probabilities, SHAP values, and verification stats.
@@ -261,13 +261,13 @@ Por favor, gere uma análise profissional em português estruturada EXATAMENTE c
         shap_over_dict = {f: float(val) for f, val in zip(self.features, shap_over25)}
         
         # 5. Fetch free web news (always run DDG crawler)
-        query = f"{home_team} vs {away_team} World Cup football squad injuries news"
+        query = f"{home_team} vs {away_team} {competition} football squad injuries news"
         web_news = self._search_web_news_free(query)
 
         # 6. Generate explanations (Claude if key available, fallback to local template with search integrations)
         explanations = None
         if os.environ.get("ANTHROPIC_API_KEY"):
-            explanations = self._generate_claude_explanations(home_team, away_team, feature_dict, prob_outcome, prob_btts, prob_over25, web_news)
+            explanations = self._generate_claude_explanations(home_team, away_team, feature_dict, prob_outcome, prob_btts, prob_over25, web_news, competition=competition)
             
         if not explanations:
             explanations = self._generate_text_explanations(feature_dict, shap_home_dict, shap_btts_dict, shap_over_dict, prob_outcome, prob_btts, prob_over25, web_news)

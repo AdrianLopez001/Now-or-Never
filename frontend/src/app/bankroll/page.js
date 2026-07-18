@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { useState, useEffect, useRef } from "react";
 import { 
@@ -13,6 +14,57 @@ import GoalCalculator from "../../components/GoalCalculator";
 // Helper formats
 const toBRL = (val) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
 const pct = (val) => `${(val * 100).toFixed(1)}%`;
+
+function buildBetFromStrategy(strategy) {
+  let selectionNames = "";
+  if (strategy.selections.length === 1) {
+    const s = strategy.selections[0];
+    selectionNames = s.selectionLabel;
+  } else {
+    selectionNames = strategy.selections.map(s => `${s.homeTeamName} (${s.selectionLabel})`).join(" + ");
+  }
+
+  const marketLabel = strategy.selections.length === 1 
+    ? `Estratégia ${strategy.label} (Simples)` 
+    : `Múltipla ${strategy.label} (${strategy.selections.length} jogos)`;
+
+  return {
+    id: "bet_strat_" + Date.now(),
+    matchId: "strat_" + strategy.label.toLowerCase(),
+    homeTeamName: strategy.selections[0].homeTeamName,
+    awayTeamName: strategy.selections[0].awayTeamName,
+    marketLabel: marketLabel,
+    selectionLabel: selectionNames,
+    odd: strategy.odd,
+    pReal: strategy.winProbability,
+    ev: strategy.ev,
+    kellyStake: strategy.stake,
+    stake: strategy.stake,
+    closingOdd: Math.round(strategy.odd * (0.97 + Math.random() * 0.06) * 100) / 100, // mock closing line
+    status: "PENDING",
+    date: new Date().toISOString()
+  };
+}
+
+function buildManualBet(match, marketLabel, selectionLabel, odd, systemPReal, calculatedEVVal, recommendedKellyAmount, stakeVal) {
+  const closingOddMock = Math.round(odd * (0.96 + Math.random() * 0.08) * 100) / 100;
+  return {
+    id: "bet_" + Date.now(),
+    matchId: match.id,
+    homeTeamName: match.homeTeamName,
+    awayTeamName: match.awayTeamName,
+    marketLabel: marketLabel,
+    selectionLabel: selectionLabel,
+    odd: odd,
+    pReal: systemPReal,
+    ev: calculatedEVVal,
+    kellyStake: recommendedKellyAmount,
+    stake: stakeVal,
+    closingOdd: closingOddMock,
+    status: "PENDING",
+    date: new Date().toISOString()
+  };
+}
 
 export default function BankrollPage() {
   // --- State for Settings ---
@@ -260,6 +312,7 @@ export default function BankrollPage() {
       setCalculatedEVVal(0);
       setRecommendedKelly({ fraction: 0, amount: 0 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedMatchId, 
     selectedMarket, 
@@ -344,36 +397,8 @@ export default function BankrollPage() {
     saveBalance(newBalance);
     setTempBalanceInput(newBalance.toString());
 
-    // Generate parlay selections text representation
-    let selectionNames = "";
-    if (strategy.selections.length === 1) {
-      const s = strategy.selections[0];
-      selectionNames = s.selectionLabel;
-    } else {
-      selectionNames = strategy.selections.map(s => `${s.homeTeamName} (${s.selectionLabel})`).join(" + ");
-    }
-
-    const marketLabel = strategy.selections.length === 1 
-      ? `Estratégia ${strategy.label} (Simples)` 
-      : `Múltipla ${strategy.label} (${strategy.selections.length} jogos)`;
-
     // Combine all info into a single parlay bet entry in historical tracking
-    const newBet = {
-      id: "bet_strat_" + Date.now(),
-      matchId: "strat_" + strategy.label.toLowerCase(),
-      homeTeamName: strategy.selections[0].homeTeamName,
-      awayTeamName: strategy.selections[0].awayTeamName,
-      marketLabel: marketLabel,
-      selectionLabel: selectionNames,
-      odd: strategy.odd,
-      pReal: strategy.winProbability,
-      ev: strategy.ev,
-      kellyStake: strategy.stake,
-      stake: strategy.stake,
-      closingOdd: Math.round(strategy.odd * (0.97 + Math.random() * 0.06) * 100) / 100, // mock closing line
-      status: "PENDING",
-      date: new Date().toISOString()
-    };
+    const newBet = buildBetFromStrategy(strategy);
 
     const updatedBets = [newBet, ...bets];
     saveBetsToStorage(updatedBets);
@@ -440,25 +465,16 @@ export default function BankrollPage() {
     saveBalance(newBalance);
     setTempBalanceInput(newBalance.toString());
 
-    // Generate random closing odd between 0.95x and 1.05x of entered odd as mock CLV closure
-    const closingOddMock = Math.round(odd * (0.96 + Math.random() * 0.08) * 100) / 100;
-
-    const newBet = {
-      id: "bet_" + Date.now(),
-      matchId: match.id,
-      homeTeamName: match.homeTeamName,
-      awayTeamName: match.awayTeamName,
-      marketLabel: marketLabel,
-      selectionLabel: selectionLabel,
-      odd: odd,
-      pReal: systemPReal,
-      ev: calculatedEVVal,
-      kellyStake: recommendedKelly.amount,
-      stake: stakeVal,
-      closingOdd: closingOddMock,
-      status: "PENDING",
-      date: new Date().toISOString()
-    };
+    const newBet = buildManualBet(
+      match,
+      marketLabel,
+      selectionLabel,
+      odd,
+      systemPReal,
+      calculatedEVVal,
+      recommendedKelly.amount,
+      stakeVal
+    );
 
     const updatedBets = [newBet, ...bets];
     saveBetsToStorage(updatedBets);
@@ -688,6 +704,7 @@ export default function BankrollPage() {
     if (mcResults) {
       paintCanvas(mcResults.samplePaths, mcResults.averageFinal);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mcResults]);
 
   // Clean feedback toast

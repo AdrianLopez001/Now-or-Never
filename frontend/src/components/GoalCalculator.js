@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { calculateGoalMetrics } from "../utils/mathEngine";
 
 // Format BRL
@@ -18,28 +18,24 @@ export default function GoalCalculator({ currentBalance }) {
   const [betsPerDay, setBetsPerDay] = useState("1");
   const [calcMode, setCalcMode] = useState("fixed"); // 'fixed' | 'compound'
 
-  // Computed results state
-  const [results, setResults] = useState(null);
-
-  // Re-run calculations on input change
-  useEffect(() => {
-    const metrics = calculateGoalMetrics({
-      capital: parseFloat(capitalInput) || 0,
-      targetProfit: parseFloat(targetProfitInput) || 0,
-      days: parseInt(daysInput) || 0,
-      riskProfile,
-      betsPerDay: parseInt(betsPerDay) || 1,
-      calcMode
-    });
-    setResults(metrics);
-  }, [capitalInput, targetProfitInput, daysInput, riskProfile, betsPerDay, calcMode]);
-
   // Sync with current bankroll balance if balance changes and is not manual edit
-  useEffect(() => {
+  const [prevBalance, setPrevBalance] = useState(currentBalance);
+  if (currentBalance !== prevBalance) {
+    setPrevBalance(currentBalance);
     if (currentBalance && currentBalance > 0) {
       setCapitalInput(String(currentBalance));
     }
-  }, [currentBalance]);
+  }
+
+  // Calculate metrics on render (no useEffect needed)
+  const results = calculateGoalMetrics({
+    capital: parseFloat(capitalInput) || 0,
+    targetProfit: parseFloat(targetProfitInput) || 0,
+    days: parseInt(daysInput) || 0,
+    riskProfile,
+    betsPerDay: parseInt(betsPerDay) || 1,
+    calcMode
+  });
 
   return (
     <div className="glass-panel rounded-3xl border border-gray-800 p-6 shadow-xl relative overflow-hidden space-y-6">

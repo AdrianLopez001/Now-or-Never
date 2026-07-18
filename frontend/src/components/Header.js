@@ -12,6 +12,7 @@ export default function Header() {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") || "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(saved);
     if (saved === "light") {
       document.documentElement.classList.add("light");

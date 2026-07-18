@@ -102,8 +102,8 @@ def fetch_espn_matches(competition: str = "fifa.world"):
                 "away_logo": away_team.get("logo", "https://flagcdn.com/w160/un.png"),
                 "date": standard_date,
                 "status": status,
-                "round": "Copa do Mundo",
-                "competition": "WC",
+                "round": "Série A" if competition == "bra.1" else "Série B" if competition == "bra.2" else "Copa do Mundo",
+                "competition": "BSA" if competition == "bra.1" else "BSB" if competition == "bra.2" else "WC",
             }
             if home_score is not None:
                 match_data["home_score"] = home_score
@@ -115,6 +115,68 @@ def fetch_espn_matches(competition: str = "fifa.world"):
     except Exception as ex:
         print(f"[ESPN] Erro: {ex}")
         return []
+
+
+def fetch_espn_standings(espn_competition: str) -> dict:
+    """
+    Queries the public ESPN standings API and builds team stats
+    in the same format as build_team_form_from_standings.
+    """
+    url = f"https://site.api.espn.com/apis/v2/sports/soccer/{espn_competition}/standings"
+    try:
+        print(f"[ESPN Standings] Buscando classificação de '{espn_competition}'...")
+        r = requests.get(url, timeout=10)
+        if r.status_code != 200:
+            print(f"ESPN Standings API falhou com status {r.status_code}")
+            return {}
+
+        data = r.json()
+        entries = data.get("children", [{}])[0].get("standings", {}).get("entries", [])
+        
+        team_stats = {}
+        for entry in entries:
+            team = entry.get("team", {})
+            tid = int(team.get("id", 0))
+            if not tid:
+                continue
+            
+            # Map stats list to a dictionary for easy access
+            stats_list = entry.get("stats", [])
+            stats_map = {s["name"]: s.get("value", 0) for s in stats_list if "name" in s}
+            
+            played = int(stats_map.get("gamesPlayed", 0))
+            won = int(stats_map.get("wins", 0))
+            drawn = int(stats_map.get("ties", 0))
+            lost = int(stats_map.get("losses", 0))
+            gf = int(stats_map.get("pointsFor", 0))
+            ga = int(stats_map.get("pointsAgainst", 0))
+            pts = int(stats_map.get("points", 0))
+            
+            # form: win rate normalizada (0.0 → 1.0)
+            form = (won + 0.5 * drawn) / max(played, 1)
+            # xG proxy: média de gols marcados
+            xg_avg = gf / max(played, 1)
+            
+            team_stats[tid] = {
+                "name":   team.get("displayName", ""),
+                "crest":  team.get("logo", ""),
+                "form":   round(min(form, 1.0), 4),
+                "points": pts,
+                "played": played,
+                "won":    won,
+                "drawn":  drawn,
+                "lost":   lost,
+                "gf":     gf,
+                "ga":     ga,
+                "xg_avg": round(min(xg_avg, 3.0), 4),
+                "xg_against_avg": round(min(ga / max(played, 1), 3.0), 4),
+            }
+        
+        print(f"  → {len(team_stats)} times carregados da classificação ESPN")
+        return team_stats
+    except Exception as ex:
+        print(f"[ESPN Standings] Erro ao carregar classificação: {ex}")
+        return {}
 
 
 def adjust_probabilities_live(pre_probs, home_score, away_score, status):
@@ -338,6 +400,8 @@ def main():
         standings_data = fetch_standings(competition)
         team_stats = build_team_form_from_standings(standings_data)
         print(f"  → {len(team_stats)} times carregados da classificação")
+    else:
+        team_stats = fetch_espn_standings(args.espn_competition)
 
     # ── 3. Gerar predições ────────────────────────────────────────────────────
     from explain import ShapExplainer  # import tardio (evita carga sem necessidade)
@@ -354,7 +418,7 @@ def main():
             team_stats=team_stats,
         )
 
-        explanation = explainer.explain_match(features, home_team=m["home"], away_team=m["away"])
+        explanation = explainer.explain_match(features, home_team=m["home"], away_team=m["away"], competition=m["round"])
         probs = explanation["probabilities"]
 
         pre_probs = {
@@ -433,10 +497,27 @@ def main():
     new_ids = {p["matchApiFootballId"] for p in predictions}
     merged = [p for p in existing if p["matchApiFootballId"] not in new_ids] + predictions
 
-    with open(target_path, "w") as f:
-        json.dump(merged, f, indent=2, ensure_ascii=False)
+    # Filtra partidas passadas (mais antigas que ontem) para manter apenas as ativas/futuras
+    now_utc = datetime.utcnow()
+    filtered_merged = []
+    for p in merged:
+        try:
+            match_dt = datetime.strptime(p["matchDate"], "%Y-%m-%dT%H:%M:%SZ")
+        except Exception:
+            try:
+                match_dt = datetime.strptime(p["matchDate"], "%Y-%m-%dT%H:%M:00Z")
+            except Exception:
+                match_dt = None
+        
+        if match_dt and match_dt < now_utc - timedelta(days=1) and p["matchStatus"] != "LIVE":
+            # Descarta partidas antigas concluídas
+            continue
+        filtered_merged.append(p)
 
-    print(f"\n✅ {len(predictions)} predições mescladas no total de {len(merged)} escritas em: {target_path}")
+    with open(target_path, "w") as f:
+        json.dump(filtered_merged, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✅ {len(predictions)} predições mescladas no total de {len(filtered_merged)} escritas em: {target_path}")
 
 
 if __name__ == "__main__":
