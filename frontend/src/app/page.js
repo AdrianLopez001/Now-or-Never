@@ -275,12 +275,12 @@ export default function Dashboard() {
 
     const selections = [];
     matchPreds.forEach(({ match, pred }) => {
-      if      (pred.probHomeWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.homeTeamName}`,        prob: pred.probHomeWin,       odd: toOdd(pred.probHomeWin) });
-      else if (pred.probAwayWin       > 0.60) selections.push({ match, desc: `Vitória do ${match.awayTeamName}`,        prob: pred.probAwayWin,       odd: toOdd(pred.probAwayWin) });
-      else if (pred.probDraw          > 0.60) selections.push({ match, desc: `Empate`,                                    prob: pred.probDraw,          odd: toOdd(pred.probDraw) });
-      else if (pred.probDoubleChance1X > 0.60 && pred.probDoubleChance1X > pred.probDoubleChanceX2)
+      if      (pred.probHomeWin       > 0.78) selections.push({ match, desc: `Vitória do ${match.homeTeamName}`,        prob: pred.probHomeWin,       odd: toOdd(pred.probHomeWin) });
+      else if (pred.probAwayWin       > 0.78) selections.push({ match, desc: `Vitória do ${match.awayTeamName}`,        prob: pred.probAwayWin,       odd: toOdd(pred.probAwayWin) });
+      else if (pred.probDraw          > 0.78) selections.push({ match, desc: `Empate`,                                    prob: pred.probDraw,          odd: toOdd(pred.probDraw) });
+      else if (pred.probDoubleChance1X > 0.78 && pred.probDoubleChance1X > pred.probDoubleChanceX2)
                                               selections.push({ match, desc: `${match.homeTeamName} ou Empate (1X)`,    prob: pred.probDoubleChance1X, odd: toOdd(pred.probDoubleChance1X) });
-      else if (pred.probDoubleChanceX2 > 0.60) selections.push({ match, desc: `${match.awayTeamName} ou Empate (X2)`, prob: pred.probDoubleChanceX2, odd: toOdd(pred.probDoubleChanceX2) });
+      else if (pred.probDoubleChanceX2 > 0.78) selections.push({ match, desc: `${match.awayTeamName} ou Empate (X2)`, prob: pred.probDoubleChanceX2, odd: toOdd(pred.probDoubleChanceX2) });
     });
     if (!selections.length) return null;
     const combinedProb = selections.reduce((acc, s) => acc * s.prob, 1.0);
@@ -329,7 +329,7 @@ export default function Dashboard() {
       {bolao && (
         <div className="space-y-3">
           <h2 className="text-sm font-black text-gray-200 uppercase tracking-wider border-l-4 border-emerald-500 pl-3">
-            🏆 Recomendação de Bolão Inteligente (IA) — Eventos &gt; 60%
+            🏆 Recomendação de Bolão Inteligente (IA) — Eventos &gt; 78%
           </h2>
           <div className="glass-panel rounded-2xl border border-emerald-500/20 bg-[#0a1a10]/40 p-6">
             <div className="grid gap-6 md:grid-cols-2">
@@ -362,7 +362,7 @@ export default function Dashboard() {
                 <div>
                   <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Resumo do Bolão</h4>
                   <p className="text-xs text-gray-400 leading-relaxed italic">
-                    Bilhete montado reunindo os eventos com probabilidade superior a 60% nos mercados de resultado final e chance dupla, maximizando a taxa de acerto estatístico.
+                    Bilhete montado reunindo os eventos com probabilidade superior a 78% nos mercados de resultado final e chance dupla, maximizando a taxa de acerto estatístico.
                   </p>
                 </div>
                 <div className="border-t border-gray-800/80 pt-4 mt-4 flex items-center justify-between gap-4">
