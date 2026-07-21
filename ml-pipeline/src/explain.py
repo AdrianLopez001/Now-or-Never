@@ -230,14 +230,23 @@ Por favor, gere uma análise profissional em português estruturada EXATAMENTE c
         p_cards_lr = self.model_cards_lr.predict_proba(df_row)[0][1]
         p_cards_gb = self.model_cards_gb.predict_proba(df_row)[0][1]
         
-        # 3. Consensus calculations (Averages)
+        # 3. Consensus calculations (Averages with Re-normalization & Monotonicity Constraints)
         prob_outcome = (prob_out_rf + prob_out_lr + prob_out_gb) / 3.0
-        prob_btts = (p_btts_rf + p_btts_lr + p_btts_gb) / 3.0
-        prob_over25 = (p_over25_rf + p_over25_lr + p_over25_gb) / 3.0
-        prob_over05 = (p_over05_rf + p_over05_lr + p_over05_gb) / 3.0
-        prob_under35 = (p_under35_rf + p_under35_lr + p_under35_gb) / 3.0
-        prob_corners = (p_corners_rf + p_corners_lr + p_corners_gb) / 3.0
-        prob_cards = (p_cards_rf + p_cards_lr + p_cards_gb) / 3.0
+        prob_outcome = prob_outcome / np.sum(prob_outcome)  # Re-normalize 1X2 sum to exactly 1.0
+
+        prob_btts = float(np.clip((p_btts_rf + p_btts_lr + p_btts_gb) / 3.0, 0.05, 0.95))
+        prob_over25 = float(np.clip((p_over25_rf + p_over25_lr + p_over25_gb) / 3.0, 0.05, 0.95))
+        
+        # Enforce Monotonicity: P(Over 0.5) >= P(Over 2.5) >= P(Over 3.5)
+        raw_over05 = (p_over05_rf + p_over05_lr + p_over05_gb) / 3.0
+        prob_over05 = float(np.clip(max(raw_over05, prob_over25 + 0.10), 0.75, 0.999))
+
+        raw_under35 = (p_under35_rf + p_under35_lr + p_under35_gb) / 3.0
+        max_over35 = max(0.01, prob_over25 - 0.12)
+        prob_under35 = float(np.clip(max(raw_under35, 1.0 - max_over35), 0.20, 0.99))
+
+        prob_corners = float(np.clip((p_corners_rf + p_corners_lr + p_corners_gb) / 3.0, 0.10, 0.90))
+        prob_cards = float(np.clip((p_cards_rf + p_cards_lr + p_cards_gb) / 3.0, 0.10, 0.90))
         
         # Calculate standard deviation to measure consensus strength
         std_outcome = np.std([prob_out_rf, prob_out_lr, prob_out_gb], axis=0)

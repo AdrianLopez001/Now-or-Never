@@ -309,9 +309,9 @@ export function generateStrategies(matches, predictions, targetProfit = 50) {
 
     // Helper to add a selection
     const addSel = (marketLabel, selectionLabel, marketKey, pReal) => {
-      if (pReal <= 0 || pReal >= 1) return;
-      // Calculate realistic odd with a 5% vig applied
-      const odd = Math.round((1 / (pReal * 1.05)) * 100) / 100;
+      if (pReal <= 0.01 || pReal >= 0.99) return;
+      // Fair decimal odd = 1 / pReal
+      const odd = Math.max(1.05, Math.round((1 / pReal) * 100) / 100);
       if (odd <= 1.02) return;
       
       selections.push({
