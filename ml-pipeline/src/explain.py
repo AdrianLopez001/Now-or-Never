@@ -30,8 +30,14 @@ class DDGParser(HTMLParser):
         if self.in_snippet:
             self.current_snippet.append(data)
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+DEFAULT_ARTIFACTS_PATH = os.path.join(PROJECT_ROOT, "ml-pipeline", "data", "model_artifacts.pkl")
+
 class ShapExplainer:
-    def __init__(self, artifacts_path="ml-pipeline/data/model_artifacts.pkl"):
+    def __init__(self, artifacts_path=None):
+        if artifacts_path is None:
+            artifacts_path = DEFAULT_ARTIFACTS_PATH
         with open(artifacts_path, "rb") as f:
             self.artifacts = pickle.load(f)
             

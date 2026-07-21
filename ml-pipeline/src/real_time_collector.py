@@ -483,15 +483,23 @@ def main():
         }
         predictions.append(payload)
 
+    # Define caminhos dinâmicos baseados na raiz do projeto
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
+    backend_target = os.path.join(PROJECT_ROOT, "backend", "src", "main", "resources", "predictions.json")
+    frontend_target = os.path.join(PROJECT_ROOT, "frontend", "src", "app", "api", "predictions.json")
+    target_paths = [backend_target, frontend_target]
+
     # Mescla as predições novas com as existentes para evitar sobrescrever outras ligas
     existing = []
-    import os
-    if os.path.exists(target_path):
-        try:
-            with open(target_path, "r") as f:
-                existing = json.load(f)
-        except Exception as ex:
-            print(f"Aviso ao ler predições existentes: {ex}")
+    for tp in target_paths:
+        if os.path.exists(tp):
+            try:
+                with open(tp, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                break
+            except Exception as ex:
+                print(f"Aviso ao ler predições existentes em {tp}: {ex}")
 
     # Sobrescreve as que têm o mesmo ID de partida, mantém as outras
     new_ids = {p["matchApiFootballId"] for p in predictions}
@@ -514,10 +522,11 @@ def main():
             continue
         filtered_merged.append(p)
 
-    with open(target_path, "w") as f:
-        json.dump(filtered_merged, f, indent=2, ensure_ascii=False)
-
-    print(f"\n✅ {len(predictions)} predições mescladas no total de {len(filtered_merged)} escritas em: {target_path}")
+    for tp in target_paths:
+        os.makedirs(os.path.dirname(tp), exist_ok=True)
+        with open(tp, "w", encoding="utf-8") as f:
+            json.dump(filtered_merged, f, indent=2, ensure_ascii=False)
+        print(f"✅ {len(predictions)} predições mescladas no total de {len(filtered_merged)} escritas em: {tp}")
 
 
 if __name__ == "__main__":
