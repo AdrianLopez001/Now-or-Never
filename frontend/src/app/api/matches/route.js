@@ -92,7 +92,8 @@ export async function GET() {
           apiFootballId: matchId,
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.matchDate) - new Date(b.matchDate));
 
     return NextResponse.json(matches, {
       headers: { "Access-Control-Allow-Origin": "*" },
@@ -115,7 +116,8 @@ export async function GET() {
         awayScore: p.awayScore,
         apiFootballId: p.matchApiFootballId,
       }))
-      .filter(m => m.matchStatus !== "FINISHED");
+      .filter(m => m.matchStatus !== "FINISHED")
+      .sort((a, b) => new Date(a.matchDate) - new Date(b.matchDate));
 
     return NextResponse.json(matches, {
       headers: { "Access-Control-Allow-Origin": "*" },

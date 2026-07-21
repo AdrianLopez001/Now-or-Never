@@ -522,6 +522,9 @@ def main():
             continue
         filtered_merged.append(p)
 
+    # Ordena por data da partida (mais próximas primeiro)
+    filtered_merged.sort(key=lambda x: x.get("matchDate", ""))
+
     for tp in target_paths:
         os.makedirs(os.path.dirname(tp), exist_ok=True)
         with open(tp, "w", encoding="utf-8") as f:
